@@ -19,9 +19,14 @@ import read_page
 ###########################################################################################################################
 # MAIN
 ###########################################################################################################################
+
+# test
+
+# read_page.testdf_from_sql()
+
 ###########################################################################################################################
 
-# TODO: select direcotry
+# TODO: select directory
 # https://stackoverflow.com/questions/11295917/how-to-select-a-directory-and-store-the-location-using-tkinter-in-python
 root = Tk()
 root.withdraw()
@@ -48,7 +53,7 @@ read_page.list_directory(folder_selected+'/'+'temp_pages')
 # results = pytesseract.image_to_data(rgb, output_type=Output.DICT)
 
 
-# # XXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXX
 # lines_y = [10, 80, 140, 210, 280, 355, 420, 492, 560,
 #            630, 690, 768, 830, 905, 960, 1040, 1100]
 

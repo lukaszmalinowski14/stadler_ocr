@@ -18,8 +18,185 @@ import os
 
 # table = pd.DataFrame(columns=['main', 'typ', 'Kode', 'Nazwa', 'ilosc', 'IDop'])
 df = pd.DataFrame()
-structura = pd.DataFrame(columns=['Main', 'Typ', 'Kod',
-                                  'Nazwa', 'ilosc', 'typ_ilosc', 'IDop'])
+structura = pd.DataFrame(
+    columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Waga', 'Kod'])
+
+
+def clear_structura():
+    global structura
+    structura = pd.DataFrame(
+        columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Waga', 'Kod'])
+
+    global df
+    df = pd.DataFrame()
+
+# def testdf_from_sql():
+#     global structura
+#     import psycopg2
+#     from sqlalchemy import create_engine
+#     conn_string = 'postgresql://testdbuser:Xai7aer7pu@10.1.5.30/pimstalnew'
+
+#     db = create_engine(conn_string)
+#     conn = db.connect()
+#     conn1 = psycopg2.connect(
+#         database="pimstalnew",
+#         user='testdbuser',
+#         password='Xai7aer7pu',
+#         host='10.1.5.30',
+#         port='5432'
+#     )
+
+#     conn1.autocommit = True
+#     cursor = conn1.cursor()
+
+#     # test read sql to df
+#     a = pd.read_sql_query('select * from meteurosystem.pandas_df', con=db)
+
+#     rows, columns = a.shape
+
+#     # print("test")
+#     # for index, row in a.iterrows():
+#     #     print(row["1"])
+
+#     # data = {
+#     #     "firstname": ["Sally", "Mary", "John"],
+#     #     "age": [50, 40, 30]
+#     # }
+
+#     # list = ["Emma", 100]
+
+#     # df = pd.DataFrame(data)
+
+#     # df.loc[len(df)] = list
+#     # print(df)
+
+#     # index = 0
+#     # col = 0
+
+#     row = []
+#     for index in range(rows):
+#         for col in range(columns):
+#             cell_val = a.iloc[index][col]
+#             # print(f"Cell value at {index}, for column {col}  : {cell_val}")
+#             if cell_val != '':
+#                 row.append(cell_val)
+#         if index % 2 == 1 and row != None:
+#             if len(row) > 0:
+#                 if row[0] == 'X':
+#                     row.insert(0, '0')
+#                     row.insert(4, 'X')
+#                     main = row[6]
+#             print(row)
+#             if len(row) > 0:
+#                 structura.loc[len(structura)] = row
+#             row = []
+#     structura['Main'] = main
+#     print(structura)
+
+#     ################################
+
+
+def testdf_from_sql():
+    global structura
+    import psycopg2
+    from sqlalchemy import create_engine
+    conn_string = 'postgresql://testdbuser:Xai7aer7pu@10.1.5.30/pimstalnew'
+
+    db = create_engine(conn_string)
+    conn = db.connect()
+    conn1 = psycopg2.connect(
+        database="pimstalnew",
+        user='testdbuser',
+        password='Xai7aer7pu',
+        host='10.1.5.30',
+        port='5432'
+    )
+
+    conn1.autocommit = True
+    cursor = conn1.cursor()
+
+    # test read sql to df
+    a = pd.read_sql_query('select * from meteurosystem.pandas_df', con=db)
+
+    rows, columns = a.shape
+
+    # print("test")
+    # for index, row in a.iterrows():
+    #     print(row["1"])
+
+    # data = {
+    #     "firstname": ["Sally", "Mary", "John"],
+    #     "age": [50, 40, 30]
+    # }
+
+    # list = ["Emma", 100]
+
+    # df = pd.DataFrame(data)
+
+    # df.loc[len(df)] = list
+    # print(df)
+
+    # index = 0
+    # col = 0
+
+    ################################
+
+
+def df_to_sql(df):
+    # import packages
+    import psycopg2
+    from sqlalchemy import create_engine
+    # df.columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+
+    # df.rename(columns={'1': 'a', '2': 'b', '3': 'c',
+    #                    '4': 'd', '5': 'e', '6': 'f', '7': 'g'}, inplace=True)
+
+    print(df)
+    # establish connections
+    conn_string = 'postgresql://testdbuser:Xai7aer7pu@10.1.5.30/pimstalnew'
+
+    db = create_engine(conn_string)
+    conn = db.connect()
+    conn1 = psycopg2.connect(
+        database="pimstalnew",
+        user='testdbuser',
+        password='Xai7aer7pu',
+        host='10.1.5.30',
+        port='5432'
+    )
+
+    conn1.autocommit = True
+    cursor = conn1.cursor()
+
+    # drop table if it already exists
+    # cursor.execute('drop table if exists meteurosystem.pandas_df')
+
+    # sql = '''CREATE TABLE meteurosystem.pandas_df(a text ,
+    # b text ,c text,d text,e text,f text,g text,h text);'''
+
+    # cursor.execute(sql)
+
+    # # import the csv file to create a dataframe
+    # data = pd.read_csv("airlines_final.csv")
+
+    # data = data[["id", "day", "airline", "destination"]]
+    # # Create DataFrame
+    # print(data)
+
+    # converting data to sql
+
+    df.to_sql('pandas_df', conn, schema='meteurosystem',
+              if_exists='append', index=False)
+
+    # fetching all rows
+    # sql1 = '''select * from meteurosystem.pandas_df;'''
+    # cursor.execute(sql1)
+    # for i in cursor.fetchall():
+    #     print(i)
+
+    conn1.commit()
+    conn1.close()
+    clear_structura()
 
 
 def ocr_file():
@@ -28,10 +205,14 @@ def ocr_file():
     results = pytesseract.image_to_data(rgb, output_type=Output.DICT)
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXX
-    lines_y = [10, 80, 140, 210, 280, 355, 420, 492, 560,
+    # lines_y = [10, 80, 140, 210, 280, 355, 420, 492, 560,
+    #            630, 690, 768, 830, 905, 960, 1040, 1100]
+
+    # lines_x = [30, 120, 220, 510, 580, 950, 1500, 1820, 1950]
+    lines_y = [10, 80, 150, 220, 280, 355, 420, 492, 560,
                630, 690, 768, 830, 905, 960, 1040, 1100]
 
-    lines_x = [30, 120, 220, 510, 580, 950, 1500, 1820, 1950]
+    lines_x = [30, 120, 220, 510, 580, 950, 1350, 1820, 1950]
 
     # wyznaczenie punktów przeciecia linni
     count_x = 0
@@ -155,25 +336,60 @@ def korekta(x, y, w, h, kolumna):
         y += 5
         w -= 10
         h -= 10
-    elif kolumna in (4, 5):
+    elif kolumna == 4:
         x += 5
         y += 5
         w -= 7
         h -= 8
+    elif kolumna == 5:
+        x += 5
+        y += 5
+        w -= 2
+        h -= 3
 
     return x, y, w, h
 
 
 def clear_data():
     global df
+    global structura
     # Drop rows with any empty cells
-    df.dropna(
-        axis=0,
-        how='all',
-        subset=None,
-        inplace=True
-    )
-    print(df)
+    # df.dropna(
+    #     axis=0,
+    #     how='all',
+    #     subset=None,
+    #     inplace=True
+    # )
+    # print(df)
+    rows, columns = df.shape
+
+    row = []
+    for index in range(rows):
+        for col in range(columns):
+            cell_val = df.iloc[index][col]
+            # print(f"Cell value at {index}, for column {col}  : {cell_val}")
+            if cell_val != '':
+                row.append(cell_val)
+            if cell_val == '' and col == 7 and index % 2 == 0 and len(row) == 5:
+                row.append('0,001')
+        if index % 2 == 1 and row != None:
+            if len(row) > 0:
+                if row[0] == 'X':
+                    row.insert(0, '0')
+                    row.insert(4, 'X')
+                    main = row[6]
+            print(row)
+            if len(row) == 7:
+                structura.loc[len(structura)] = row
+            # else:
+            #     print("ERROR")
+            row = []
+    structura['Main'] = main
+    print(structura)
+
+    df_to_sql(structura)
+
+    # insert to db
 
 
 def put_to_table(tab_temp):
@@ -197,3 +413,5 @@ def put_to_table(tab_temp):
     print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     # data = pd.DataFrame(table)
     print(df)
+
+    # df_to_sql(df)
