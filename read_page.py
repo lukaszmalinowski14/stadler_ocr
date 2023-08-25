@@ -19,13 +19,13 @@ import os
 # table = pd.DataFrame(columns=['main', 'typ', 'Kode', 'Nazwa', 'ilosc', 'IDop'])
 df = pd.DataFrame()
 structura = pd.DataFrame(
-    columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Waga', 'Kod'])
+    columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Material', 'Waga', 'Kod'])
 
 
 def clear_structura():
     global structura
     structura = pd.DataFrame(
-        columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Waga', 'Kod'])
+        columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Material', 'Waga', 'Kod'])
 
     global df
     df = pd.DataFrame()
@@ -212,7 +212,7 @@ def ocr_file():
     lines_y = [10, 80, 150, 220, 280, 355, 420, 492, 560,
                630, 690, 768, 830, 905, 960, 1040, 1100]
 
-    lines_x = [30, 120, 220, 510, 580, 950, 1350, 1820, 1950]
+    lines_x = [30, 120, 220, 510, 580, 950, 1465, 1820, 1950]
 
     # wyznaczenie punktów przeciecia linni
     count_x = 0
@@ -255,6 +255,9 @@ def ocr_file():
             tabela = np.vstack((tabela, wiersz))
             # print("#################")
             # print(pd.DataFrame(tabela))
+        if count_y > 6 and all(element == '' for element in wiersz):
+            # print("test")
+            break
         wiersz = np.array([])
 
     ###############################################################
@@ -276,6 +279,9 @@ def list_directory(path):
         print(file)
         if (analize_page(str(file))):
             ocr_file()
+
+    # zapisanie ostatniej skladowej
+    clear_data()
 
 
 def analize_page(file):
@@ -366,23 +372,29 @@ def clear_data():
     row = []
     for index in range(rows):
         for col in range(columns):
+            if col == 1:
+                continue
             cell_val = df.iloc[index][col]
-            # print(f"Cell value at {index}, for column {col}  : {cell_val}")
-            if cell_val != '':
-                row.append(cell_val)
-            if cell_val == '' and col == 7 and index % 2 == 0 and len(row) == 5:
-                row.append('0,001')
-        if index % 2 == 1 and row != None:
-            if len(row) > 0:
-                if row[0] == 'X':
-                    row.insert(0, '0')
-                    row.insert(4, 'X')
-                    main = row[6]
+            if index % 2 == 0:
+                if cell_val != '':
+                    row.append(cell_val)
+                else:
+                    row.append(None)
+            if index % 2 == 1 and col == 5:
+                if cell_val != '':
+                    row.append(cell_val)
+                else:
+                    row.append(None)
+        if index % 2 == 1:
+            if index == 1 and row[1] == 'X':
+                row[0] = '0'
+                row[4] = 'X'
+                main = row[7]
             print(row)
-            if len(row) == 7:
+            if not all(element == None for element in row):
                 structura.loc[len(structura)] = row
-            # else:
-            #     print("ERROR")
+                # else:
+                #     print("ERROR")
             row = []
     structura['Main'] = main
     print(structura)
