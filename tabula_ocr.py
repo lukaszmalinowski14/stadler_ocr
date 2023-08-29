@@ -1,0 +1,329 @@
+import tabula as tb
+import pandas as pd
+import re
+import os
+import PyPDF2
+from pathlib import Path
+import numpy as np
+import sql
+import glob
+
+structura = pd.DataFrame(
+    columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', ])
+
+
+def type_one_list_files(path, type):
+    if type == 1:
+        pliki = sorted(Path(path).iterdir(), key=os.path.getmtime)
+
+        for file in pliki:
+            print(str(file).upper())
+            if str(file).upper().endswith('BOM.PDF'):
+                stadler_Swiss(str(file))
+
+    if type == 2:
+        lista_plikow = []
+        krotka_list = os.walk(path)
+        # count_folders = 0
+        # count_files = 0
+        for _ in krotka_list:
+            print(_)
+            # count_folders += 1
+            # Unpacking tuple
+            sciezka = _[0]
+            lista_folderow = list(_[1])  # Convert generator to a list
+            pliki = list(_[2])  # Convert generator to a list
+
+            # Displaying content
+            print("Ścieżka:", sciezka)
+            print("Lista folderow:", lista_folderow)
+            print("Lista plików:", lista_plikow)
+
+            list_of_files = filter(os.path.isfile,
+                                   glob.glob(str(_[0]) + '/*'))
+
+            list_of_files = sorted(list_of_files,
+                                   key=os.path.getmtime, reverse=True)
+
+            # pliki = sorted(Path(str(_[0])).iterdir(), key=os.path.getmtime)
+
+            count = 0
+            for el in list_of_files:
+                if str(el).upper().endswith('.PDF'):
+                    if count == 0:
+                        lista_plikow.append(el)
+                    count += 1
+
+        for _ in lista_plikow:
+            stadler_more(str(_))
+
+
+def clear_data(df):
+
+    columns = ['Typ', 'ilosc', 'typ_ilosc',
+               'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Main']
+    print(df)
+    df = df[[0, 2, 3, 1, 1, 5, 7, 6, 1, 'Main']]
+    df.columns = columns
+    print(df)
+
+    sql.df_to_sql(df)
+
+
+def clear_data_more(df):
+
+    columns = ['Typ', 'ilosc', 'typ_ilosc',
+               'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Main']
+    print(df)
+    df = df[[3, 4, 5, 1, 6, 2, 'empty', 'empty', 0, 'Main']]
+    df.columns = columns
+    print(df)
+
+    sql.df_to_sql(df)
+
+
+def stadler_Swiss(file):
+    # wynikowe df
+    df_out = pd.DataFrame(columns=('kod', 'grubosc', 'gatunek'))
+
+    # file = '12676012_deu.pdf'
+    reader = PyPDF2.PdfReader(file)
+    totalPages1 = len(reader.pages)
+    print(totalPages1)
+    for page in range(totalPages1):
+        box = reader.pages[0].mediabox
+        print(f"width: {box.width}")
+        print(f"height: {box.height}")
+        df = tb.read_pdf(
+            file, pages='1', area=(36, 20, 450, 800), pandas_options={'header': True}, stream=True)
+        # print(tables)
+        # df = tb.read_pdf(_, pages=str(1), area=(
+        #     0, 0, 100, 100), pandas_options={'header': None}, stream=True)
+
+        print(df)
+
+        # display each of the dataframes
+    wiersz = np.array([])
+    tabela = np.empty((0, 8), str)
+
+    for dfs in df:
+        print(dfs.size)
+        print(dfs)
+        # sprawdzenie czy kolumna zawiera "t="
+        rows, columns = dfs.shape
+        start_index = 2
+        for index in range(start_index, rows):
+            # zapisanie wiersza do tabeli
+            print(dfs.iloc[index][0])
+            if not np.isnan(dfs.iloc[index][0]) and len(wiersz) > 0:
+                # jesżeli długowsc wiersz ==7 (brak grubosci materialu):
+                if len(wiersz) == 7:
+                    wiersz = np.append(
+                        wiersz, None)
+                tabela = np.vstack((tabela, wiersz))
+                wiersz = np.array([])
+
+            for col in range(columns):
+                cell_val = dfs.iloc[index][col]
+                print(type(cell_val))
+
+                # przypisanie indexu 0 dla elementu głownego
+                if col == 0 and index == 2 and np.isnan(cell_val):
+                    cell_val = 0
+                    Main_index = (0, index)
+                # przypisanie indexu do zmiennej index
+                if col == 0:
+                    Pos = cell_val
+                print(cell_val)
+
+                if col in (0, 1, 2, 3, 4, 6, 9) and not np.isnan(Pos):
+                    if str(cell_val) == 'nan':
+                        cell_val = None
+                    wiersz = np.append(
+                        wiersz, cell_val)
+                if col == 4 and np.isnan(Pos):
+                    if str(cell_val) == 'nan':
+                        cell_val = None
+                    wiersz = np.append(
+                        wiersz, cell_val)
+
+            # x = (wiersz.shape)[0]
+            # if x == 8:
+
+    # zapisanie ostatniego wiersza:
+    if len(wiersz) == 7:
+        wiersz = np.append(
+            wiersz, None)
+    tabela = np.vstack((tabela, wiersz))
+    data = pd.DataFrame(tabela)
+    main = data.iloc[0][1]
+    data['Main'] = main
+    clear_data(data)
+
+    # if (df[5].str.contains('t=')).any():
+
+    #     # dla jednoliniowego bomu
+    #     if len(df.index) < 7:
+    #         new_row = pd.Series(
+    #             {'kod': df.iloc[3, 1], 'grubosc': df.iloc[5, 5], 'gatunek': df.iloc[3, 8]})
+    #     # dla wielo liniowego bomu
+    #     else:
+    #         new_row = pd.Series(
+    #             {'kod': df.iloc[3, 1], 'grubosc': df.iloc[8, 5], 'gatunek': df.iloc[6, 9]})
+
+    #         # print(df.iloc[3, 1])
+    #         # print(df.iloc[6, 9])
+    #         # print(df.iloc[8, 5])
+
+    #     df_out = append_row(df_out, new_row)
+    # print(df_out)
+
+
+def stadler_more(file):
+    # wynikowe df
+    df_out = pd.DataFrame(columns=('kod', 'grubosc', 'gatunek'))
+
+    # file = '12676012_deu.pdf'
+    reader = PyPDF2.PdfReader(file)
+    totalPages1 = len(reader.pages)
+    print(totalPages1)
+    for page in range(totalPages1):
+        box = reader.pages[0].mediabox
+        print(f"width: {box.width}")
+        print(f"height: {box.height}")
+        df = tb.read_pdf(
+            file, pages='1', area=(36, 5, 450, 800), pandas_options={'header': True}, stream=True)
+        # print(tables)
+        # df = tb.read_pdf(_, pages=str(1), area=(
+        #     0, 0, 100, 100), pandas_options={'header': None}, stream=True)
+
+        print(df)
+
+        # display each of the dataframes
+    wiersz = np.array([])
+    tabela = np.empty((0, 8), str)
+
+    for dfs in df:
+        print(dfs.size)
+        print(dfs)
+        # sprawdzenie czy kolumna zawiera "t="
+        rows, columns = dfs.shape
+        start_index = 4
+        row_count = 0
+        for index in range(start_index, rows):
+            row_count += 1
+            if row_count > 3:
+                row_count = 1
+            # zapisanie wiersza do tabeli
+            print(dfs.iloc[index][0])
+            # if not np.isnan(dfs.iloc[index][0]) and len(wiersz) > 0:
+            # jesżeli długowsc wiersz ==7 (brak grubosci materialu):
+            if row_count == 1:
+                if len(wiersz) > 2:
+                    # wiersz = np.append(
+                    #     wiersz, None)
+                    tabela = np.vstack((tabela, wiersz))
+                wiersz = np.array([])
+
+            for col in range(columns):
+                cell_val = dfs.iloc[index][col]
+                # print(type(cell_val))
+
+                # przypisanie indexu 0 dla elementu głownego
+                if col == 0 and index == 2 and np.isnan(cell_val):
+                    cell_val = 0
+                    Main_index = (0, index)
+                # przypisanie indexu do zmiennej index
+                if col == 0:
+                    Pos = cell_val
+                print(cell_val)
+                if row_count == 1:
+                    print("wiersz 1")
+                    if col in (0, 4, 9):
+                        if str(cell_val) == 'nan':
+                            cell_val = None
+                        # Zapisanie jednostki sztuk dla główngo prduktu
+                        if col == 2 and cell_val == None:
+                            cell_val = 'STK'
+                        wiersz = np.append(
+                            wiersz, cell_val)
+                if row_count == 2:
+                    if col in (0, 3):
+                        if col == 3:
+                            if str(cell_val) == 'nan':
+                                wiersz = np.append(
+                                    wiersz, '1')
+                                wiersz = np.append(
+                                    wiersz, 'STK')
+                            else:
+                                x = cell_val.split(" ")
+                                wiersz = np.append(
+                                    wiersz, x[0])
+                                wiersz = np.append(
+                                    wiersz, x[1])
+                        if col == 0:
+                            if str(cell_val) == 'nan':
+                                cell_val = None
+                                if col == 0 and cell_val == None:
+                                    cell_val = '0'
+                            wiersz = np.append(
+                                wiersz, cell_val)
+                if row_count == 3:
+                    if col in (0, 4, 8):
+                        if col == 4:
+                            if str(cell_val) != 'nan':
+                                wiersz[1] = wiersz[1]+''+cell_val
+                        if col == 8:
+                            if str(cell_val) != 'nan':
+                                wiersz[2] = wiersz[2]+''+cell_val
+                        else:
+                            if str(cell_val) == 'nan':
+                                cell_val = None
+                            wiersz = np.append(
+                                wiersz, cell_val)
+
+                # if col in (0, 1, 2, 3, 4, 6, 9) and str(Pos) != 'nan':
+                #     if str(cell_val) == 'nan':
+                #         cell_val = None
+                #     # Zapisanie jednostki sztuk dla główngo prduktu
+                #     if col == 2 and cell_val == None:
+                #         cell_val = 'STK'
+                #     wiersz = np.append(
+                #         wiersz, cell_val)
+                # if col == 4 and str(Pos) == 'nan':
+                #     if str(cell_val) == 'nan':
+                #         cell_val = None
+                #     wiersz = np.append(
+                #         wiersz, cell_val)
+
+            # x = (wiersz.shape)[0]
+            # if x == 8:
+
+    # zapisanie ostatniego wiersza:
+    if len(wiersz) == 8:
+        tabela = np.vstack((tabela, wiersz))
+    data = pd.DataFrame(tabela)
+    print(data)
+    main = data.iloc[0][0]
+    pusty = None
+    data['Main'] = main
+    data['empty'] = pusty
+    clear_data_more(data)
+
+    # if (df[5].str.contains('t=')).any():
+
+    #     # dla jednoliniowego bomu
+    #     if len(df.index) < 7:
+    #         new_row = pd.Series(
+    #             {'kod': df.iloc[3, 1], 'grubosc': df.iloc[5, 5], 'gatunek': df.iloc[3, 8]})
+    #     # dla wielo liniowego bomu
+    #     else:
+    #         new_row = pd.Series(
+    #             {'kod': df.iloc[3, 1], 'grubosc': df.iloc[8, 5], 'gatunek': df.iloc[6, 9]})
+
+    #         # print(df.iloc[3, 1])
+    #         # print(df.iloc[6, 9])
+    #         # print(df.iloc[8, 5])
+
+    #     df_out = append_row(df_out, new_row)
+    # print(df_out)

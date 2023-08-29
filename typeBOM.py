@@ -28,9 +28,9 @@ def list_directory(path):
                 lista_plikow.append(sciezka+'/'+el)
                 count_files += 1
 
-    if count_files > 1 and count_folders > 2:
+    if count_files > 1 and count_folders > 1:
         type = 2
-    elif count_files > 1 and count_folders == 2:
+    elif count_files > 1 and count_folders == 1:
         type = 1
     elif count_files == 1:
         type = 0
