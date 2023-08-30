@@ -137,7 +137,9 @@ def stadler_Swiss(file):
                 print(cell_val)
 
                 if col in (0, 1, 2, 3, 4, 6, 9) and not np.isnan(Pos):
-                    if str(cell_val) == 'nan':
+                    if index == 2 and col == 2:
+                        cell_val = '1'
+                    elif str(cell_val) == 'nan':
                         cell_val = None
                     wiersz = np.append(
                         wiersz, cell_val)
@@ -151,6 +153,7 @@ def stadler_Swiss(file):
             # if x == 8:
 
     # zapisanie ostatniego wiersza:
+
     if len(wiersz) == 7:
         wiersz = np.append(
             wiersz, None)
@@ -180,6 +183,8 @@ def stadler_Swiss(file):
 
 
 def stadler_more(file):
+    if file == 'N:/Wsp-Ogol/Backlog_raporty_LMA/Stadler_struktury/12291999\\10121975\\10121975-005-deu.pdf':
+        print("test")
     # wynikowe df
     df_out = pd.DataFrame(columns=('kod', 'grubosc', 'gatunek'))
 
@@ -192,13 +197,12 @@ def stadler_more(file):
         print(f"width: {box.width}")
         print(f"height: {box.height}")
         df = tb.read_pdf(
-            file, pages='1', area=(36, 5, 450, 800), pandas_options={'header': True}, stream=True)
+            file, pages='1', area=(70, 15, 450, 800), pandas_options={'header': False}, stream=True)
         # print(tables)
         # df = tb.read_pdf(_, pages=str(1), area=(
         #     0, 0, 100, 100), pandas_options={'header': None}, stream=True)
 
         print(df)
-
         # display each of the dataframes
     wiersz = np.array([])
     tabela = np.empty((0, 8), str)
@@ -208,7 +212,17 @@ def stadler_more(file):
         print(dfs)
         # sprawdzenie czy kolumna zawiera "t="
         rows, columns = dfs.shape
-        start_index = 4
+        start_index = 0
+        check_index = 1
+        # print(dfs.iloc[0][1])
+        # informacja o krustszej tabeli:
+        material_col = 9
+        if dfs.iloc[0][8] == 'Bemerkung':
+            print("krótka")
+            material_col = 8
+        if dfs.iloc[0][1] == 'PLM-Nr.':
+            start_index = 1
+            check_index = 2
         row_count = 0
         for index in range(start_index, rows):
             row_count += 1
@@ -218,10 +232,11 @@ def stadler_more(file):
             print(dfs.iloc[index][0])
             # if not np.isnan(dfs.iloc[index][0]) and len(wiersz) > 0:
             # jesżeli długowsc wiersz ==7 (brak grubosci materialu):
+
             if row_count == 1:
                 if len(wiersz) > 2:
-                    # wiersz = np.append(
-                    #     wiersz, None)
+                    wiersz = np.append(
+                        wiersz, None)
                     tabela = np.vstack((tabela, wiersz))
                 wiersz = np.array([])
 
@@ -230,57 +245,94 @@ def stadler_more(file):
                 # print(type(cell_val))
 
                 # przypisanie indexu 0 dla elementu głownego
-                if col == 0 and index == 2 and np.isnan(cell_val):
+                if col == 0 and index == check_index and np.isnan(cell_val):
                     cell_val = 0
                     Main_index = (0, index)
                 # przypisanie indexu do zmiennej index
                 if col == 0:
                     Pos = cell_val
                 print(cell_val)
+                elo = 1
+
                 if row_count == 1:
-                    print("wiersz 1")
-                    if col in (0, 4, 9):
+                    if col in (1, 5, material_col):
                         if str(cell_val) == 'nan':
                             cell_val = None
-                        # Zapisanie jednostki sztuk dla główngo prduktu
-                        if col == 2 and cell_val == None:
-                            cell_val = 'STK'
                         wiersz = np.append(
                             wiersz, cell_val)
+
                 if row_count == 2:
-                    if col in (0, 3):
-                        if col == 3:
-                            if str(cell_val) == 'nan':
-                                wiersz = np.append(
-                                    wiersz, '1')
-                                wiersz = np.append(
-                                    wiersz, 'STK')
-                            else:
-                                x = cell_val.split(" ")
-                                wiersz = np.append(
-                                    wiersz, x[0])
-                                wiersz = np.append(
-                                    wiersz, x[1])
-                        if col == 0:
-                            if str(cell_val) == 'nan':
-                                cell_val = None
-                                if col == 0 and cell_val == None:
-                                    cell_val = '0'
-                            wiersz = np.append(
-                                wiersz, cell_val)
+                    if col == 0 and index == 0 and np.isnan(cell_val):
+                        cell_val = 0
+                        wiersz = np.append(
+                            wiersz, cell_val)
+                    elif col in (0, 3, 4):
+                        if str(cell_val) == 'nan':
+                            cell_val = None
+                        wiersz = np.append(
+                            wiersz, cell_val)
+
                 if row_count == 3:
-                    if col in (0, 4, 8):
-                        if col == 4:
-                            if str(cell_val) != 'nan':
-                                wiersz[1] = wiersz[1]+''+cell_val
-                        if col == 8:
-                            if str(cell_val) != 'nan':
-                                wiersz[2] = wiersz[2]+''+cell_val
-                        else:
-                            if str(cell_val) == 'nan':
-                                cell_val = None
-                            wiersz = np.append(
-                                wiersz, cell_val)
+                    if col == 5:
+                        if str(cell_val) == 'nan':
+                            cell_val = None
+                        if cell_val != None:
+                            wiersz[1] = str(wiersz[1]) + ' ' + cell_val
+                    elif col == material_col:
+                        if str(cell_val) == 'nan':
+                            cell_val = None
+                        if cell_val != None:
+                            wiersz[2] = str(wiersz[2]) + ' ' + cell_val
+                    elif col == 1:
+                        if str(cell_val) == 'nan':
+                            cell_val = None
+                        wiersz = np.append(
+                            wiersz, cell_val)
+
+                # if row_count == 1:
+                #     print("wiersz 1")
+                #     if col in (0, 4, 9):
+                #         if str(cell_val) == 'nan':
+                #             cell_val = None
+                #         # Zapisanie jednostki sztuk dla główngo prduktu
+                #         # if col == 4 and cell_val == None:
+                #         #     cell_val = 'STK'
+                #         wiersz = np.append(
+                #             wiersz, cell_val)
+                # if row_count == 2:
+                #     if col in (0, 3):
+                #         if col == 3:
+                #             if str(cell_val) == 'nan':
+                #                 wiersz = np.append(
+                #                     wiersz, '1')
+                #                 wiersz = np.append(
+                #                     wiersz, 'STK')
+                #             else:
+                #                 x = cell_val.split(" ")
+                #                 wiersz = np.append(
+                #                     wiersz, x[0])
+                #                 wiersz = np.append(
+                #                     wiersz, x[1])
+                #         if col == 0:
+                #             if str(cell_val) == 'nan':
+                #                 cell_val = None
+                #                 if col == 0 and cell_val == None:
+                #                     cell_val = '0'
+                #             wiersz = np.append(
+                #                 wiersz, cell_val)
+                # if row_count == 3:
+                #     if col in (0, 4, 8):
+                #         if col == 4:
+                #             if str(cell_val) != 'nan':
+                #                 wiersz[1] = wiersz[1]+''+cell_val
+                #         if col == 8:
+                #             if str(cell_val) != 'nan':
+                #                 wiersz[2] = str(wiersz[2])+''+cell_val
+                #         else:
+                #             if str(cell_val) == 'nan':
+                #                 cell_val = None
+                #             wiersz = np.append(
+                #                 wiersz, cell_val)
 
                 # if col in (0, 1, 2, 3, 4, 6, 9) and str(Pos) != 'nan':
                 #     if str(cell_val) == 'nan':
@@ -300,11 +352,15 @@ def stadler_more(file):
             # if x == 8:
 
     # zapisanie ostatniego wiersza:
-    if len(wiersz) == 8:
+    if len(wiersz) == 7:
+        wiersz = np.append(
+            wiersz, cell_val)
         tabela = np.vstack((tabela, wiersz))
     data = pd.DataFrame(tabela)
     print(data)
     main = data.iloc[0][0]
+    if str(main) == 'None':
+        print("sfgfg")
     pusty = None
     data['Main'] = main
     data['empty'] = pusty
