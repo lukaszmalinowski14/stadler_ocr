@@ -65,9 +65,10 @@ def clear_data(df):
     print(df)
     df = df[[0, 2, 3, 1, 1, 5, 7, 6, 1, 'Main']]
     df.columns = columns
+    main = df.iloc[0]['Main']
     print(df)
 
-    sql.df_to_sql(df)
+    sql.df_to_sql(df, main)
 
 
 def clear_data_more(df):
@@ -182,8 +183,81 @@ def stadler_Swiss(file):
     # print(df_out)
 
 
+def stadler_anzahl(dfs):
+    wiersz = np.array([])
+    tabela = np.empty((0, 8), str)
+    print("test_stadler_anzahl")
+    check_index = 2
+    start_index = 2
+    rows, columns = dfs.shape
+    row_count = 0
+    print(dfs)
+
+    for index in range(start_index, rows):
+        row_count += 1
+        if row_count > 3:
+            row_count = 1
+        # zapisanie wiersza do tabeli
+        print(dfs.iloc[index][0])
+        # if not np.isnan(dfs.iloc[index][0]) and len(wiersz) > 0:
+        # jesżeli długowsc wiersz ==7 (brak grubosci materialu):
+
+        if row_count == 1:
+            if len(wiersz) > 2:
+                wiersz = np.append(
+                    wiersz, None)
+                tabela = np.vstack((tabela, wiersz))
+            wiersz = np.array([])
+
+        for col in range(columns):
+            cell_val = dfs.iloc[index][col]
+            # print(type(cell_val))
+
+            # przypisanie indexu 0 dla elementu głownego
+            # if col == 0 and index == check_index and np.isnan(cell_val):
+            if col == 0 and index == check_index and str(cell_val) == 'nan':
+                cell_val = 0
+                Main_index = (0, index)
+                wiersz = np.append(
+                    wiersz, cell_val)
+            # przypisanie indexu do zmiennej index
+            if col == 0:
+                Pos = cell_val
+            print(cell_val)
+            elo = 1
+
+            if row_count == 1:
+                if col in (3, 7):
+                    if str(cell_val) == 'nan':
+                        cell_val = None
+                    wiersz = np.append(
+                        wiersz, cell_val)
+
+            if row_count == 2:
+               # if col == 0 and index == 0 and np.isnan(cell_val):
+                if col == 2:
+                    if str(cell_val) == 'nan':
+                        cell_val = None
+                    wiersz = np.append(
+                        wiersz, cell_val)
+
+            if row_count == 3:
+                if col == 3:
+                    if str(cell_val) == 'nan':
+                        cell_val = None
+                    if cell_val != None:
+                        wiersz[1] = str(wiersz[1]) + ' ' + cell_val
+
+    # zapisanie ostatniego wiersza:
+    if len(wiersz) == 7:
+        wiersz = np.append(
+            wiersz, cell_val)
+        tabela = np.vstack((tabela, wiersz))
+    return tabela
+
+
 def stadler_more(file):
-    if file == 'N:/Wsp-Ogol/Backlog_raporty_LMA/Stadler_struktury/12291999\\10121975\\10121975-005-deu.pdf':
+    if file == 'N:/Wsp-Ogol/Backlog_raporty_LMA/Stadler_struktury/12291999\\12075170\\12075170-000-deu.pdf':
         print("test")
     # wynikowe df
     df_out = pd.DataFrame(columns=('kod', 'grubosc', 'gatunek'))
@@ -197,7 +271,9 @@ def stadler_more(file):
         print(f"width: {box.width}")
         print(f"height: {box.height}")
         df = tb.read_pdf(
-            file, pages='1', area=(70, 15, 450, 800), pandas_options={'header': False}, stream=True)
+            file, pages='1', area=(70, 10, 450, 800), pandas_options={'header': False}, stream=True)
+        # df = tb.read_pdf(
+        #     file, pages='1', area=(70, 15, 450, 800), pandas_options={'header': False}, stream=True)
         # print(tables)
         # df = tb.read_pdf(_, pages=str(1), area=(
         #     0, 0, 100, 100), pandas_options={'header': None}, stream=True)
@@ -211,23 +287,68 @@ def stadler_more(file):
         print(dfs.size)
         print(dfs)
         # sprawdzenie czy kolumna zawiera "t="
-        rows, columns = dfs.shape
+
         start_index = 0
         check_index = 1
         # print(dfs.iloc[0][1])
         # informacja o krustszej tabeli:
         material_col = 9
+        rows, columns = dfs.shape
+
+        column_names = list(dfs.columns)
+        print(column_names)
+
+        if dfs.iloc[0][1] == 'Anzahl':
+            stadler_anzahl(dfs)
+            continue
+
+        if columns == 7:
+            dfs.insert(loc=0, column='Pos1', value=[
+                       'nan' for i in range(dfs.shape[0])])
+            dfs.insert(loc=3, column='Meng', value=[
+                       'nan' for i in range(dfs.shape[0])])
+            dfs.insert(loc=4, column='ME', value=[
+                       'nan' for i in range(dfs.shape[0])])
+            dfs.insert(loc=7, column='Vorzug', value=[
+                       'nan' for i in range(dfs.shape[0])])
+            dfs.insert(loc=10, column='Hersteller', value=[
+                       'nan' for i in range(dfs.shape[0])])
+            print(dfs)
+
+        if columns == 8:
+            dfs.insert(loc=0, column='Pos1', value=[
+                       'nan' for i in range(dfs.shape[0])])
+            dfs.insert(loc=3, column='Meng', value=[
+                       'nan' for i in range(dfs.shape[0])])
+            dfs.insert(loc=4, column='ME', value=[
+                       'nan' for i in range(dfs.shape[0])])
+            dfs.insert(loc=7, column='Vorzug', value=[
+                       'nan' for i in range(dfs.shape[0])])
+            print(dfs)
+
+        rows, columns = dfs.shape
+
         if dfs.iloc[0][8] == 'Bemerkung':
             print("krótka")
             material_col = 8
+
         if dfs.iloc[0][1] == 'PLM-Nr.':
             start_index = 1
             check_index = 2
+        elif dfs.iloc[1][1] == 'PLM-Nr.':
+            start_index = 2
+            check_index = 3
         row_count = 0
         for index in range(start_index, rows):
             row_count += 1
             if row_count > 3:
                 row_count = 1
+
+             # sprawdzenie poprawnej kolejnosci wierszy
+            if row_count == 1 and str(dfs.iloc[index][1]) == 'nan':
+                row_count -= 1
+                continue
+
             # zapisanie wiersza do tabeli
             print(dfs.iloc[index][0])
             # if not np.isnan(dfs.iloc[index][0]) and len(wiersz) > 0:
@@ -245,7 +366,8 @@ def stadler_more(file):
                 # print(type(cell_val))
 
                 # przypisanie indexu 0 dla elementu głownego
-                if col == 0 and index == check_index and np.isnan(cell_val):
+                # if col == 0 and index == check_index and np.isnan(cell_val):
+                if col == 0 and index == check_index and str(cell_val) == 'nan':
                     cell_val = 0
                     Main_index = (0, index)
                 # przypisanie indexu do zmiennej index
@@ -258,15 +380,25 @@ def stadler_more(file):
                     if col in (1, 5, material_col):
                         if str(cell_val) == 'nan':
                             cell_val = None
+                        print(type(cell_val))
+                        if col == 1 and str(type(cell_val)) == "<class 'numpy.float64'>":
+                            cell_val = cell_val.astype(np.int64)
+                            cell_val = str(cell_val)
                         wiersz = np.append(
                             wiersz, cell_val)
 
                 if row_count == 2:
-                    if col == 0 and index == 0 and np.isnan(cell_val):
+                   # if col == 0 and index == 0 and np.isnan(cell_val):
+                    if col == 0 and index == 0 and str(cell_val) == 'nan':
                         cell_val = 0
                         wiersz = np.append(
                             wiersz, cell_val)
                     elif col in (0, 3, 4):
+                        if col == 3 and str(cell_val) == 'nan':
+                            cell_val = '1'
+                            # przypisanie ilosc 1 i STK dla gdt puste (pierwszy element na liscie)
+                        if col == 4 and str(cell_val) == 'nan':
+                            cell_val = 'STK'
                         if str(cell_val) == 'nan':
                             cell_val = None
                         wiersz = np.append(
@@ -277,12 +409,18 @@ def stadler_more(file):
                         if str(cell_val) == 'nan':
                             cell_val = None
                         if cell_val != None:
-                            wiersz[1] = str(wiersz[1]) + ' ' + cell_val
+                            if str(wiersz[1]) == 'None':
+                                wiersz[1] = cell_val
+                            else:
+                                wiersz[1] = str(wiersz[1]) + ' ' + cell_val
                     elif col == material_col:
                         if str(cell_val) == 'nan':
                             cell_val = None
                         if cell_val != None:
-                            wiersz[2] = str(wiersz[2]) + ' ' + cell_val
+                            if str(wiersz[2]) == 'None':
+                                wiersz[2] = cell_val
+                            else:
+                                wiersz[2] = str(wiersz[2]) + ' ' + cell_val
                     elif col == 1:
                         if str(cell_val) == 'nan':
                             cell_val = None
@@ -358,13 +496,16 @@ def stadler_more(file):
         tabela = np.vstack((tabela, wiersz))
     data = pd.DataFrame(tabela)
     print(data)
-    main = data.iloc[0][0]
-    if str(main) == 'None':
-        print("sfgfg")
-    pusty = None
-    data['Main'] = main
-    data['empty'] = pusty
-    clear_data_more(data)
+    rows, columns = data.shape
+
+    if (rows > 0 and columns > 0):
+        main = data.iloc[0][0]
+        if str(main) == 'None':
+            print("sfgfg")
+        pusty = None
+        data['Main'] = main
+        data['empty'] = pusty
+        clear_data_more(data)
 
     # if (df[5].str.contains('t=')).any():
 

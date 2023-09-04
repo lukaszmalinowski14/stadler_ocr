@@ -6,6 +6,8 @@ import pandas as pd
 import numpy as np
 from tkinter import filedialog
 from tkinter import *
+import tabula_ocr
+import str_to_excel
 
 
 # BOM path
@@ -48,9 +50,8 @@ if type == 0:
     read_page.list_directory(folder_selected+'/'+'temp_pages')
 
 elif type in (1, 2):
-    import tabula_ocr
     print(f"type {type}")
     tabula_ocr.type_one_list_files(folder_selected, type)
 
-# elif type == 2:
-#     print("type 2")
+# generowanie struktury w excelu
+str_to_excel.excel_str()

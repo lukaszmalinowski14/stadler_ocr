@@ -13,7 +13,7 @@ import pytesseract
 from PIL import Image
 from pathlib import Path
 import os
-import sql
+# import sql
 # import openpyxl
 # import matplotlib.image
 
@@ -282,7 +282,7 @@ def clear_data():
     structura['Main'] = main
     print(structura)
 
-    sql.df_to_sql(structura)
+    sql.df_to_sql(structura, main)
     clear_structura()
 
     # insert to db

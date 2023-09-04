@@ -1,9 +1,10 @@
 import psycopg2
 from sqlalchemy import create_engine
 import pandas as pd
+from sqlalchemy import delete
 
 
-def df_to_sql(df):
+def df_to_sql(df, main):
     # import packages
 
     # df.columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
@@ -27,6 +28,19 @@ def df_to_sql(df):
 
     conn1.autocommit = True
     cursor = conn1.cursor()
+
+    # delete data from table if exists
+    # delete
+    delete = 'DELETE FROM meteurosystem.pandas_df WHERE "Main" ='+"'"+main+"'"
+    # dele = meteurosystem.pandas_df.delete().where(meteurosystem.pandas_df.c."Main" == main)
+    cursor.execute(delete)
+
+    # with db.connect() as connection:
+    #     result = connection.execute(
+    #         text("DELETE FROM [meteurosystem].[pandas_df] WHERE ['Main'] ="+main))
+    #     connection.commit()
+    #     print(
+    #         f"Deleted {result.rowcount} row(s) from ")
 
     # drop table if it already exists
     # cursor.execute('drop table if exists meteurosystem.pandas_df')
