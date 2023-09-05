@@ -63,7 +63,7 @@ def clear_data(df):
     columns = ['Typ', 'ilosc', 'typ_ilosc',
                'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Main']
     print(df)
-    df = df[[0, 2, 3, 1, 1, 5, 7, 6, 1, 'Main']]
+    df = df[[0, 2, 3, 4, 1, 5, 7, 6, 1, 'Main']]
     df.columns = columns
     main = df.iloc[0]['Main']
     print(df)
@@ -84,6 +84,8 @@ def clear_data_more(df):
 
 
 def stadler_Swiss(file):
+    if file == 'N:\\Wsp-Ogol\\Backlog_raporty_LMA\\Stadler_struktury\\SP000022419_A\\SP000022420_B_BOM.pdf':
+        print("test")
     # wynikowe df
     df_out = pd.DataFrame(columns=('kod', 'grubosc', 'gatunek'))
 
@@ -95,8 +97,15 @@ def stadler_Swiss(file):
         box = reader.pages[0].mediabox
         print(f"width: {box.width}")
         print(f"height: {box.height}")
-        df = tb.read_pdf(
-            file, pages='1', area=(36, 20, 450, 800), pandas_options={'header': True}, stream=True)
+        print(type(box.width))
+        if box.width > 841 and box.width < 845 and box.height > 595 and box.height < 600:
+            df = tb.read_pdf(
+                file, pages='1', area=(36, 20, 450, 800), pandas_options={'header': True}, stream=True)
+        elif box.width > 1190 and box.width < 1195 and box.height > 841 and box.height < 845:
+            df = tb.read_pdf(
+                file, pages='1', area=(56, 2, 500, 1190), pandas_options={'header': True}, stream=True)
+        else:
+            print("ERROR PAGE SIZE OUT OF RANGE")
         # print(tables)
         # df = tb.read_pdf(_, pages=str(1), area=(
         #     0, 0, 100, 100), pandas_options={'header': None}, stream=True)
