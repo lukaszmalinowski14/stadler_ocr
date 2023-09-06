@@ -20,13 +20,13 @@ import os
 # table = pd.DataFrame(columns=['main', 'typ', 'Kode', 'Nazwa', 'ilosc', 'IDop'])
 df = pd.DataFrame()
 structura = pd.DataFrame(
-    columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod'])
+    columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Uwagi'])
 
 
 def clear_structura():
     global structura
     structura = pd.DataFrame(
-        columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod'])
+        columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Uwagi'])
 
     global df
     df = pd.DataFrame()

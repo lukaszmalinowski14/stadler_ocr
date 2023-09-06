@@ -9,7 +9,7 @@ import sql
 import glob
 
 structura = pd.DataFrame(
-    columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', ])
+    columns=['Typ', 'ilosc', 'typ_ilosc', 'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Uwagi1', 'Uwagi2'])
 
 
 def type_one_list_files(path, type):
@@ -61,9 +61,9 @@ def type_one_list_files(path, type):
 def clear_data(df):
 
     columns = ['Typ', 'ilosc', 'typ_ilosc',
-               'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Main']
+               'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Main', 'Uwagi1', 'Uwagi2']
     print(df)
-    df = df[[0, 2, 3, 4, 1, 5, 7, 6, 1, 'Main']]
+    df = df[[0, 2, 3, 4, 1, 5, 9, 8, 1, 'Main', 6, 7]]
     df.columns = columns
     main = df.iloc[0]['Main']
     print(df)
@@ -74,7 +74,7 @@ def clear_data(df):
 def clear_data_more(df):
 
     columns = ['Typ', 'ilosc', 'typ_ilosc',
-               'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Main']
+               'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Main', 'Uwagi1', 'Uwagi2']
     print(df)
     df = df[[3, 4, 5, 1, 6, 2, 'empty', 'empty', 0, 'Main']]
     df.columns = columns
@@ -84,7 +84,7 @@ def clear_data_more(df):
 
 
 def stadler_Swiss(file):
-    if file == 'N:\\Wsp-Ogol\\Backlog_raporty_LMA\\Stadler_struktury\\SP000022419_A\\SP000022420_B_BOM.pdf':
+    if file == 'N:\\Wsp-Ogol\\Backlog_raporty_LMA\\Stadler_struktury\\SP000022427_B\\SP000022175_A_BOM.pdf':
         print("test")
     # wynikowe df
     df_out = pd.DataFrame(columns=('kod', 'grubosc', 'gatunek'))
@@ -114,57 +114,92 @@ def stadler_Swiss(file):
 
         # display each of the dataframes
     wiersz = np.array([])
-    tabela = np.empty((0, 8), str)
+    tabela = np.empty((0, 10), str)
 
     for dfs in df:
+        row_number = 0
         print(dfs.size)
         print(dfs)
         # sprawdzenie czy kolumna zawiera "t="
         rows, columns = dfs.shape
         start_index = 2
         for index in range(start_index, rows):
-            # zapisanie wiersza do tabeli
-            print(dfs.iloc[index][0])
-            if not np.isnan(dfs.iloc[index][0]) and len(wiersz) > 0:
+            # zapisanie wiersza jeżeli Artikel-Nr nie jest Nan i wiersz nie jest pusty:
+            print(str(dfs.iloc[index, 1]))
+            if str(dfs.iloc[index, 1]) != 'nan' and len(wiersz) > 0:
+                # zapisanie wiersza do tabeli
+                # print(dfs.iloc[index][0])
+                # if not np.isnan(dfs.iloc[index][0]) and len(wiersz) > 0:
                 # jesżeli długowsc wiersz ==7 (brak grubosci materialu):
-                if len(wiersz) == 7:
+                if len(wiersz) == 9:
                     wiersz = np.append(
                         wiersz, None)
                 tabela = np.vstack((tabela, wiersz))
                 wiersz = np.array([])
+                row_number = 0
 
+            row_number += 1
             for col in range(columns):
                 cell_val = dfs.iloc[index][col]
-                print(type(cell_val))
+                if row_number == 1:
 
-                # przypisanie indexu 0 dla elementu głownego
-                if col == 0 and index == 2 and np.isnan(cell_val):
-                    cell_val = 0
-                    Main_index = (0, index)
-                # przypisanie indexu do zmiennej index
-                if col == 0:
-                    Pos = cell_val
-                print(cell_val)
+                    print(type(cell_val))
 
-                if col in (0, 1, 2, 3, 4, 6, 9) and not np.isnan(Pos):
-                    if index == 2 and col == 2:
-                        cell_val = '1'
-                    elif str(cell_val) == 'nan':
-                        cell_val = None
-                    wiersz = np.append(
-                        wiersz, cell_val)
-                if col == 4 and np.isnan(Pos):
-                    if str(cell_val) == 'nan':
-                        cell_val = None
-                    wiersz = np.append(
-                        wiersz, cell_val)
+                    # przypisanie indexu 0 dla elementu głownego
+                    if col == 0 and index == 2 and np.isnan(cell_val):
+                        cell_val = 0
+                        Main_index = (0, index)
+                    # przypisanie indexu do zmiennej index
+                    if col == 0:
+                        Pos = cell_val
+                    print(cell_val)
 
+                    if col in (0, 1, 2, 3, 4, 6, 7, 8, 9) and not np.isnan(Pos):
+                        if index == 2 and col == 2:
+                            cell_val = '1'
+                        elif str(cell_val) == 'nan':
+                            cell_val = None
+                        wiersz = np.append(
+                            wiersz, cell_val)
+                    if col == 4 and np.isnan(Pos):
+                        if str(cell_val) == 'nan':
+                            cell_val = None
+                        wiersz = np.append(
+                            wiersz, cell_val)
+                if row_number == 2:
+                    if col in (4, 6, 7, 8) and not np.isnan(Pos):
+                        if str(cell_val) != 'nan':
+                            if col > 4:
+                                kolumna = col-1
+                            else:
+                                kolumna = col
+                            if col == 4 and str(cell_val).startswith('t='):
+                                wiersz = np.append(
+                                    wiersz, cell_val)
+                            if wiersz[kolumna] != 'nan':
+                                wiersz[kolumna] = str(wiersz[kolumna]) + \
+                                    ' '+str(cell_val)
+                            else:
+                                wiersz[kolumna] = str(cell_val)
+
+                if row_number == 3:
+                    if col in (4, 6, 7, 8) and not np.isnan(Pos):
+                        if str(cell_val) != 'nan':
+                            if col > 4:
+                                kolumna = col-1
+                            else:
+                                kolumna = col
+                            if wiersz[kolumna] != 'nan':
+                                wiersz[kolumna] = str(wiersz[kolumna]) + \
+                                    ' '+str(cell_val)
+                            else:
+                                wiersz[kolumna] = str(cell_val)
             # x = (wiersz.shape)[0]
             # if x == 8:
 
     # zapisanie ostatniego wiersza:
 
-    if len(wiersz) == 7:
+    if len(wiersz) == 9:
         wiersz = np.append(
             wiersz, None)
     tabela = np.vstack((tabela, wiersz))

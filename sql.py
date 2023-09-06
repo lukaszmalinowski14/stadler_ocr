@@ -32,7 +32,6 @@ def df_to_sql(df, main):
     # delete data from table if exists
     # delete
     delete = 'DELETE FROM meteurosystem.pandas_df WHERE "Main" ='+"'"+main+"'"
-    # dele = meteurosystem.pandas_df.delete().where(meteurosystem.pandas_df.c."Main" == main)
     cursor.execute(delete)
 
     # with db.connect() as connection:

@@ -83,28 +83,33 @@ def edit_Lka(df):
 
 def edit_zakup(df):
     global df_zakup
-    print(df)
-    row = []
-    row.append(df[9])
-    row.append(df[3])
-    row.append(None)
-    row.append(df[1])
-    row.append(None)
-    row.append(None)
-    row.append(None)
-    uwagi = None
+    for index, row in df.iterrows():
+        print(row)
+        wiersz = []
+        wiersz.append(row[9])
+        wiersz.append(row[3])
+        wiersz.append(None)
+        wiersz.append(row[1])
+        wiersz.append(None)
+        wiersz.append(None)
+        wiersz.append(None)
+        uwagi = None
 
-    if str(df[5]) != 'None' and str(df[6]) != 'None':
-        uwagi = str(df[5]) + '; ' + str(df[6])
-    elif str(df[5]) != 'None':
-        uwagi = str(df[5])
-    elif str(df[6]) != 'None':
-        uwagi = str(df[6])
-    row.append(uwagi)
+        if str(row[5]) != 'None':
+            uwagi = str(row[5])
+        if str(row[6]) != 'None' and uwagi != None:
+            uwagi = uwagi + '; '+str(row[6])
+        elif str(row[6]) != 'None' and uwagi == None:
+            uwagi = str(row[6])
+        if str(row[10]) != 'None' and uwagi != None:
+            uwagi = uwagi + '; '+str(row[10])
+        elif str(row[10]) != 'None' and uwagi == None:
+            uwagi = str(row[10])
+        wiersz.append(uwagi)
 
-    df_zakup.loc[len(df_zakup)] = row
+        df_zakup.loc[len(df_zakup)] = wiersz
 
-    print(df_zakup)
+        print(df_zakup)
 
 
 def prepare_main_row(df):
@@ -164,7 +169,9 @@ def excel_str():
         ######
 
         # dla Elek dopisanie gru
-        Lki = df_temp.query('typ == 300 and nazwa.str.contains("Blech")')
+        print(df_temp)
+        Lki = df_temp.query(
+            'typ > 299 and (nazwa.str.contains("Blech") or nazwa.str.upper().str.contains("WINKELPROFIL"))')
         print(Lki)
         rows, columns = Lki.shape
         if rows > 0:
@@ -172,11 +179,11 @@ def excel_str():
 
         # elementy zakupowe:
         zakup = df_temp.query(
-            'typ == 300 and nazwa.str.contains("Blech")== False')
+            'typ > 299 and nazwa.str.contains("Blech")== False')
         print(zakup)
         rows, columns = zakup.shape
         if rows > 0:
-            edit_zakup(zakup.iloc[0])
+            edit_zakup(zakup)
 
         # sprawdzenie czy element nie ma elementów zależnych:
         if index > 0:
