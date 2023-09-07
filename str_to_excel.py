@@ -81,6 +81,16 @@ def edit_Lka(df):
     print(df_struktura)
 
 
+def edit_prof(df):
+    global df_struktura
+    # print(df_struktura.loc[len(df_struktura), 'Kod'])
+    # print(df_struktura.loc[len(df_struktura)-1, 'Kod'])
+    material = df[3]+'; ' + df[5]
+    df_struktura.loc[len(df_struktura)-1, ['#']] = material
+
+    print(df_struktura)
+
+
 def edit_zakup(df):
     global df_zakup
     for index, row in df.iterrows():
@@ -171,15 +181,24 @@ def excel_str():
         # dla Elek dopisanie gru
         print(df_temp)
         Lki = df_temp.query(
-            'typ > 299 and (nazwa.str.contains("Blech") or nazwa.str.upper().str.contains("WINKELPROFIL"))')
+            'typ > 299 and (nazwa.str.contains("Blech"))')
         print(Lki)
         rows, columns = Lki.shape
         if rows > 0:
             edit_Lka(Lki.iloc[0])
 
+         # dla Profili, katownikow itp
+        print(df_temp)
+        prof = df_temp.query(
+            'typ > 299 and (nazwa.str.upper().str.contains("WINKELPROFIL"))')
+        print(prof)
+        rows, columns = prof.shape
+        if rows > 0:
+            edit_prof(prof.iloc[0])
+
         # elementy zakupowe:
         zakup = df_temp.query(
-            'typ > 299 and nazwa.str.contains("Blech")== False')
+            'typ > 299 and nazwa.str.contains("Blech")== False and  nazwa.str.upper().str.contains("WINKELPROFIL")==False')
         print(zakup)
         rows, columns = zakup.shape
         if rows > 0:
