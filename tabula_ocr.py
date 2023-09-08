@@ -78,8 +78,8 @@ def clear_data_Anzahl_short(df):
     columns = ['Typ', 'ilosc', 'typ_ilosc',
                'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Main', 'Uwagi1', 'Uwagi2']
     print(df)
-    df = df[['empty', 'empty', 'empty', 1, 3, 2,
-             'empty', 4, 3, 'Main', 'empty', 'empty']]
+    df = df[[0, 1, 2, 3, 5,
+             4, 'empty', 6, 5, 'Main', 'empty', 'empty']]
     df.columns = columns
     print(df)
     main = df.iloc[0]['Main']
@@ -90,8 +90,8 @@ def clear_data_Anzahl(df):
     columns = ['Typ', 'ilosc', 'typ_ilosc',
                'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Main', 'Uwagi1', 'Uwagi2']
     print(df)
-    df = df[[0, 'empty', 'empty', 1, 4, 2,
-             'empty', 'empty', 4, 'Main', 3, 'empty']]
+    df = df[[0, 1, 2, 3, 6, 4,
+             'empty', 'empty', 6, 'Main', 5, 'empty']]
     df.columns = columns
     print(df)
     main = df.iloc[0]['Main']
@@ -295,6 +295,10 @@ def stadler_anzahl(dfs):
                 Main_index = (0, index)
                 wiersz = np.append(
                     wiersz, cell_val)
+                wiersz = np.append(
+                    wiersz, '1')
+                wiersz = np.append(
+                    wiersz, 'STK')
             # przypisanie indexu do zmiennej index
             if col == 0:
                 Pos = cell_val
@@ -321,17 +325,17 @@ def stadler_anzahl(dfs):
                     if str(cell_val) == 'nan':
                         cell_val = None
                     if cell_val != None:
-                        wiersz[1] = str(wiersz[1]) + '; ' + cell_val
+                        wiersz[3] = str(wiersz[3]) + '; ' + cell_val
                 if col == 7:
                     if str(cell_val) == 'nan':
                         cell_val = None
                     if cell_val != None:
-                        wiersz[2] = str(wiersz[2]) + '; ' + cell_val
+                        wiersz[4] = str(wiersz[4]) + '; ' + cell_val
                 if col == 8:
                     if str(cell_val) == 'nan':
                         cell_val = None
                     if cell_val != None:
-                        wiersz[3] = str(wiersz[3]) + '; ' + cell_val
+                        wiersz[5] = str(wiersz[5]) + '; ' + cell_val
 
     # zapisanie ostatniego wiersza:
         # zapisanie ostatniego wiersza:
@@ -372,17 +376,24 @@ def stadler_anzahl_short(dfs):
             cell_val = dfs.iloc[index][col]
             # print(type(cell_val))
 
-            # przypisanie indexu 0 dla elementu głownego
-            # if col == 0 and index == check_index and np.isnan(cell_val):
-            if col == 0 and index == check_index and str(cell_val) == 'nan':
-                cell_val = 0
-                Main_index = (0, index)
+            if col == 0 and index == check_index and np.isnan(cell_val):
+                # przypisanie indexu 0 dla elementu głownego
+                # ilosc i typu stk
                 wiersz = np.append(
-                    wiersz, cell_val)
-            # przypisanie indexu do zmiennej index
-            if col == 0:
-                Pos = cell_val
-            print(cell_val)
+                    wiersz, '0')
+                wiersz = np.append(
+                    wiersz, '1')
+                wiersz = np.append(
+                    wiersz, 'STK')
+            # if col == 0 and index == check_index and str(cell_val) == 'nan':
+            #     cell_val = 0
+            #     Main_index = (0, index)
+            #     wiersz = np.append(
+            #         wiersz, cell_val)
+            # # przypisanie indexu do zmiennej index
+            # if col == 0:
+            #     Pos = cell_val
+            # print(cell_val)
             elo = 1
 
             if row_count == 1:
@@ -409,9 +420,9 @@ def stadler_anzahl_short(dfs):
                         cell_val = None
                     if cell_val != None:
                         if col == 2:
-                            wiersz[1] = str(wiersz[1]) + '; ' + str(cell_val)
+                            wiersz[3] = str(wiersz[3]) + '; ' + str(cell_val)
                         if col == 5:
-                            wiersz[2] = str(wiersz[2]) + '; ' + str(cell_val)
+                            wiersz[4] = str(wiersz[4]) + '; ' + str(cell_val)
 
     # zapisanie ostatniego wiersza:
     while len(wiersz) < 8:
@@ -422,7 +433,7 @@ def stadler_anzahl_short(dfs):
 
 
 def stadler_more(file):
-    if file == 'N:/Wsp-Ogol/Backlog_raporty_LMA/Stadler_struktury/12324288\\12002566\\12002566-000-deu.pdf':
+    if file == 'N:/Wsp-Ogol/Backlog_raporty_LMA/Stadler_struktury/12324288\\12005330\\12005330-001-deu.pdf':
         print("test")
 
     # wynikowe df
@@ -465,6 +476,7 @@ def stadler_more(file):
     tabela = np.empty((0, 8), str)
 
     for dfs in df:
+
         print(dfs.size)
         print(dfs)
         # sprawdzenie czy kolumna zawiera "t="
@@ -537,6 +549,62 @@ def stadler_more(file):
             elif dfs.iloc[1][1] == 'PLM-Nr.':
                 start_index = 2
                 check_index = 3
+
+            # rozbicie kolumny 'Rev Menge' na 'Rev' i 'Menge':
+            # sprawdzenie kolumn w dfs
+            column_names = list(dfs.columns.values)
+            lista_nowych_kolumn = column_names
+            print(column_names)
+            if column_names[2] == 'Rev Menge':
+                del lista_nowych_kolumn[2]
+                lista_nowych_kolumn.insert(2, 'Rev')
+                lista_nowych_kolumn.insert(3, 'Menge')
+                # Rozdzielanie wartości oddzielonych spacją i tworzenie nowych kolumn
+                dfs[['Rev', 'Menge']] = dfs['Rev Menge'].str.split(
+                    ' ', expand=True)
+
+                # Usuwanie pierwotnej kolumny 'Kolumna_do_rozdzielenia'
+                dfs.drop(columns=['Rev Menge'], inplace=True)
+
+                # Przesunięcie nowych kolumn na pozycje 3 i 4 (licząc od zera)
+                dfs = dfs[lista_nowych_kolumn]
+
+                # view the updated DataFrame
+                print(dfs)
+
+            # sprawdzenie czy jest własciwy układ wierszy (czasami dane sa w 2 wierszach zamiast 3)
+            wartosc_col1 = dfs[lista_nowych_kolumn[0]].tolist()
+            print(wartosc_col1)
+
+            # generowanie listy koulmn w ktorych powinno byc 'nan'
+            lista_nan = [0, 1, 2, 3, 4]
+            licz = 0
+            for i in range(6, 100):
+                licz += 1
+                if licz < 3:
+                    lista_nan.append(i)
+                else:
+                    licz = 0
+
+            if (len(wartosc_col1) > 5):
+                licznik = -1
+                for i in wartosc_col1:
+                    licznik += 1
+                    if licznik in lista_nan:
+                        if str(wartosc_col1[licznik]) != 'nan':
+                            print("test")
+                            # dodanie pustego wiersza do dfs
+                            # Creating an empty series
+                            wiersz_nan = []
+                            for _ in lista_nowych_kolumn:
+                                wiersz_nan.append(None)
+                            s = pd.Series(
+                                wiersz_nan, index=lista_nowych_kolumn)
+                            # Dodawanie pustego wiersza na wybranej pozycji
+                            dfs = pd.concat([dfs.iloc[:licznik], s.to_frame(
+                            ).T, dfs.iloc[licznik:]]).reset_index(drop=True)
+                            print(dfs)
+
             row_count = 0
             for index in range(start_index, rows):
                 row_count += 1
@@ -594,7 +662,7 @@ def stadler_more(file):
                             wiersz = np.append(
                                 wiersz, cell_val)
                         elif col in (0, 3, 4):
-                            if col == 3 and str(cell_val) == 'nan':
+                            if col == 3 and (str(cell_val) == 'nan' or str(cell_val) == 'None'):
                                 cell_val = '1'
                                 # przypisanie ilosc 1 i STK dla gdt puste (pierwszy element na liscie)
                             if col == 4 and str(cell_val) == 'nan':
@@ -706,9 +774,9 @@ def stadler_more(file):
         if znacznik_typ == 0:
             main = data.iloc[0][0]
         if znacznik_typ == 1:
-            main = data.iloc[0][3]
+            main = data.iloc[0][5]
         if znacznik_typ == 2:
-            main = data.iloc[0][4]
+            main = data.iloc[0][6]
         if str(main) == 'None':
             print("sfgfg")
         pusty = None
