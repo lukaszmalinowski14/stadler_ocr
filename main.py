@@ -49,6 +49,7 @@ if type == 0:
 
     read_page.list_directory(folder_selected+'/'+'temp_pages')
 
+
 elif type in (1, 2):
     print(f"type {type}")
     tabula_ocr.type_one_list_files(folder_selected, type)

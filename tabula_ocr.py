@@ -110,6 +110,18 @@ def clear_data_more(df):
     sql.df_to_sql(df, main)
 
 
+def clear_data_noRev(df):
+
+    columns = ['Typ', 'ilosc', 'typ_ilosc',
+               'Nazwa', 'Rys', 'Material', 'Grubosc', 'Waga', 'Kod', 'Main', 'Uwagi1', 'Uwagi2']
+    print(df)
+    df = df[[4, 5, 6, 1, 0, 2, 'empty', 'empty', 0, 'Main', 3, 'empty']]
+    df.columns = columns
+    print(df)
+    main = df.iloc[0]['Main']
+    sql.df_to_sql(df, main)
+
+
 def stadler_Swiss(file):
     if file == 'N:\\Wsp-Ogol\\Backlog_raporty_LMA\\Stadler_struktury\\SP000022427_B\\SP000022175_A_BOM.pdf':
         print("test")
@@ -432,8 +444,190 @@ def stadler_anzahl_short(dfs):
     return tabela
 
 
+def row_check(dfs, lista_nowych_kolumn, check_index=1):
+    # sprawdzenie czy jest własciwy układ wierszy (czasami dane sa w 2 wierszach zamiast 3)
+    wartosc_col1 = dfs[lista_nowych_kolumn[0]].tolist()
+    print(wartosc_col1)
+    ok = True
+    # generowanie listy koulmn w ktorych powinno byc 'nan'
+    lista_nan = [0, 1, 2, 3, 4]
+    licz = 0
+    for i in range(6, 100):
+        licz += 1
+        if licz < 3:
+            lista_nan.append(i)
+        else:
+            licz = 0
+
+    if (len(wartosc_col1) > 5):
+        licznik = -1
+        for i in wartosc_col1:
+            licznik += 1
+            if licznik in lista_nan:
+                if str(wartosc_col1[licznik]) != 'nan':
+                    print("test")
+                    ok = False
+                    # dodanie pustego wiersza do dfs
+                    # Creating an empty series
+                    wiersz_nan = []
+                    for _ in lista_nowych_kolumn:
+                        wiersz_nan.append(None)
+                    s = pd.Series(
+                        wiersz_nan, index=lista_nowych_kolumn)
+                    # Dodawanie pustego wiersza na wybranej pozycji
+                    dfs = pd.concat([dfs.iloc[:licznik-1], s.to_frame(
+                    ).T, dfs.iloc[licznik-1:]]).reset_index(drop=True)
+                    print(dfs)
+                    check_index += 1
+
+                    return dfs, ok, check_index
+
+    return dfs, ok, check_index
+
+
+def stadler_without_rev(dfs):
+    print(dfs)
+    column_names = list(dfs.columns.values)
+    lista_nowych_kolumn = column_names
+    # funkcja sprawdzająca czy indx=2 to wiersz z kodem towaru + Nan
+    # jezeli tak usuniecie wiersza wpisanie kodu do idx=1
+    if str(dfs.iloc[1, 1]) == 'nan':
+        dfs.iloc[1, 1] = str(dfs.iloc[2, 1])
+        dfs = dfs.drop(2)
+        print(dfs)
+
+    # funkcja sprawdzajaca poprawna ilosc wierszy:
+    check_row = False
+
+    while check_row == False:
+        dfs, check_row, check_index = row_check(
+            dfs, lista_nowych_kolumn)
+
+    wiersz = np.array([])
+    tabela = np.empty((0, 8), str)
+
+    # Dodawanie nowej kolumny 'Rev' na pozycji 4 (indeks 3)
+    print(dfs)
+    dfs.insert(2, 'Rev', [None] * len(dfs))
+    print(dfs)
+    # odswierzenie listyk olumn
+    check_index = 2
+    start_index = 1
+    rows, columns = dfs.shape
+    row_count = 0
+    print(dfs)
+    lista_nowych_kolumn = list(dfs.columns.values)
+    check_index = 2
+
+    for index in range(start_index, rows):
+        row_count += 1
+        if row_count > 3:
+            row_count = 1
+
+        print(dfs.iloc[index])
+
+        if row_count == 1:
+            if len(wiersz) > 2:
+                wiersz = np.append(
+                    wiersz, None)
+                tabela = np.vstack((tabela, wiersz))
+            wiersz = np.array([])
+
+        for col in range(columns):
+            cell_val = dfs.iloc[index][col]
+            # print(type(cell_val))
+
+            # if col == 0 and index == check_index and np.isnan(cell_val):
+            #     # przypisanie indexu 0 dla elementu głownego
+            #     # ilosc i typu stk
+            #     wiersz = np.append(
+            #         wiersz, '0')
+            #     wiersz = np.append(
+            #         wiersz, '1')
+            #     wiersz = np.append(
+            #         wiersz, 'STK')
+            # if col == 0 and index == check_index and str(cell_val) == 'nan':
+            #     cell_val = 0
+            #     Main_index = (0, index)
+            #     wiersz = np.append(
+            #         wiersz, cell_val)
+            # # przypisanie indexu do zmiennej index
+            # if col == 0:
+            #     Pos = cell_val
+            # print(cell_val)
+            elo = 1
+
+            if row_count == 1:
+                if col in (1, 5, 8, 9):
+                    if str(cell_val) == 'nan':
+                        cell_val = None
+                    if col == 1 and str(type(cell_val)) == "<class 'numpy.float64'>":
+                        cell_val = cell_val.astype(np.int64)
+                        cell_val = str(cell_val)
+                    wiersz = np.append(
+                        wiersz, cell_val)
+
+            if row_count == 2:
+               # if col == 0 and index == 0 and np.isnan(cell_val):
+                if col in (0, 3, 4, 5, 8, 9):
+                    if col == 0:
+                        if index == check_index and str(cell_val) == 'nan':
+                            wiersz = np.append(
+                                wiersz, '0')
+                        else:
+                            wiersz = np.append(
+                                wiersz, cell_val)
+                    if col == 3:
+                        if index == check_index and np.isnan(cell_val):
+                            wiersz = np.append(
+                                wiersz, '1')
+                        else:
+                            wiersz = np.append(
+                                wiersz, cell_val)
+                    if col == 4:
+                        if index == check_index and np.isnan(cell_val):
+                            wiersz = np.append(
+                                wiersz, 'STK')
+                        else:
+                            wiersz = np.append(
+                                wiersz, cell_val)
+                    if str(cell_val) == 'nan':
+                        cell_val = None
+                    if cell_val != None:
+                        if col == 5:
+                            wiersz[1] = str(wiersz[1]) + '; ' + str(cell_val)
+                        if col == 8:
+                            wiersz[2] = str(wiersz[2]) + '; ' + str(cell_val)
+                        if col == 9:
+                            wiersz[3] = str(wiersz[3]) + '; ' + str(cell_val)
+
+            if row_count == 3:
+                if col in (5, 8, 9):
+                    if str(cell_val) == 'nan':
+                        cell_val = None
+                    if cell_val != None:
+                        if col == 5:
+                            wiersz[1] = str(wiersz[1]) + '; ' + str(cell_val)
+                        if col == 8:
+                            wiersz[2] = str(wiersz[2]) + '; ' + str(cell_val)
+                        if col == 9:
+                            wiersz[3] = str(wiersz[3]) + '; ' + str(cell_val)
+
+    # zapisanie ostatniego wiersza:
+    while len(wiersz) < 8:
+        wiersz = np.append(
+            wiersz, cell_val)
+    print(wiersz)
+    tabela = np.vstack((tabela, wiersz))
+    return tabela
+
+
 def stadler_more(file):
-    if file == 'N:/Wsp-Ogol/Backlog_raporty_LMA/Stadler_struktury/12324288\\12005330\\12005330-001-deu.pdf':
+    if file == 'N:/Wsp-Ogol/Backlog_raporty_LMA/Stadler_struktury/12324288\\12005316\\12005316-004-deu.pdf':
+        print("test")
+    if file == 'N:/Wsp-Ogol/Backlog_raporty_LMA/Stadler_struktury/12324288\\12000359\\12000359-000-deu.pdf':
+        print("test")
+    if file == 'N:/Wsp-Ogol/Backlog_raporty_LMA/Stadler_struktury/12324288\\12001881\\12001881-003-deu.pdf':
         print("test")
 
     # wynikowe df
@@ -512,6 +706,18 @@ def stadler_more(file):
             print(data)
             rows, columns = data.shape
 
+        column_names = list(dfs.columns.values)
+        lista_nowych_kolumn = column_names
+        # sprawdzenie czy czwarta kolumna jest 'Rev':
+        if lista_nowych_kolumn[2] != 'Rev' and column_names[2] != 'Rev Menge' and znacznik_typ == 0:
+            print("tst")
+            znacznik_typ = 3
+            tabela = stadler_without_rev(dfs)
+
+            data = pd.DataFrame(tabela)
+            print(data)
+            rows, columns = data.shape
+
         if znacznik_typ == 0:
             if columns == 7:
                 dfs.insert(loc=0, column='Pos1', value=[
@@ -552,8 +758,7 @@ def stadler_more(file):
 
             # rozbicie kolumny 'Rev Menge' na 'Rev' i 'Menge':
             # sprawdzenie kolumn w dfs
-            column_names = list(dfs.columns.values)
-            lista_nowych_kolumn = column_names
+
             print(column_names)
             if column_names[2] == 'Rev Menge':
                 del lista_nowych_kolumn[2]
@@ -572,38 +777,12 @@ def stadler_more(file):
                 # view the updated DataFrame
                 print(dfs)
 
-            # sprawdzenie czy jest własciwy układ wierszy (czasami dane sa w 2 wierszach zamiast 3)
-            wartosc_col1 = dfs[lista_nowych_kolumn[0]].tolist()
-            print(wartosc_col1)
+            # funkcja sprawdzajaca poprawna ilosc wierszy:
+            check_row = False
 
-            # generowanie listy koulmn w ktorych powinno byc 'nan'
-            lista_nan = [0, 1, 2, 3, 4]
-            licz = 0
-            for i in range(6, 100):
-                licz += 1
-                if licz < 3:
-                    lista_nan.append(i)
-                else:
-                    licz = 0
-
-            if (len(wartosc_col1) > 5):
-                licznik = -1
-                for i in wartosc_col1:
-                    licznik += 1
-                    if licznik in lista_nan:
-                        if str(wartosc_col1[licznik]) != 'nan':
-                            print("test")
-                            # dodanie pustego wiersza do dfs
-                            # Creating an empty series
-                            wiersz_nan = []
-                            for _ in lista_nowych_kolumn:
-                                wiersz_nan.append(None)
-                            s = pd.Series(
-                                wiersz_nan, index=lista_nowych_kolumn)
-                            # Dodawanie pustego wiersza na wybranej pozycji
-                            dfs = pd.concat([dfs.iloc[:licznik], s.to_frame(
-                            ).T, dfs.iloc[licznik:]]).reset_index(drop=True)
-                            print(dfs)
+            while check_row == False:
+                dfs, check_row, check_index = row_check(
+                    dfs, lista_nowych_kolumn, check_index)
 
             row_count = 0
             for index in range(start_index, rows):
@@ -621,6 +800,7 @@ def stadler_more(file):
                 # if not np.isnan(dfs.iloc[index][0]) and len(wiersz) > 0:
                 # jesżeli długowsc wiersz ==7 (brak grubosci materialu):
 
+                print(dfs.iloc[index])
                 if row_count == 1:
                     if len(wiersz) > 2:
                         while len(wiersz) < 8:
@@ -762,10 +942,10 @@ def stadler_more(file):
                 # if x == 8:
 
             # zapisanie ostatniego wiersza:
-            if len(wiersz) == 7:
+            while len(wiersz) < 8:
                 wiersz = np.append(
                     wiersz, cell_val)
-                tabela = np.vstack((tabela, wiersz))
+            tabela = np.vstack((tabela, wiersz))
             data = pd.DataFrame(tabela)
             print(data)
             rows, columns = data.shape
@@ -777,6 +957,8 @@ def stadler_more(file):
             main = data.iloc[0][5]
         if znacznik_typ == 2:
             main = data.iloc[0][6]
+        if znacznik_typ == 3:
+            main = data.iloc[0][0]
         if str(main) == 'None':
             print("sfgfg")
         pusty = None
@@ -788,6 +970,8 @@ def stadler_more(file):
             clear_data_Anzahl_short(data)
         if znacznik_typ == 2:
             clear_data_Anzahl(data)
+        if znacznik_typ == 3:
+            clear_data_noRev(data)
 
     # if (df[5].str.contains('t=')).any():
 
